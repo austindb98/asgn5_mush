@@ -4,27 +4,40 @@
 #include <stdio.h>
 #include "parseline.h"
 
+/* Error codes
+-1: Length of input/command
+-2: invalid command
+-3: ambiguous input/output
+-4: bad redirection
+ */
+
+ /*
+ Empty string in in/out = stdin/stdout
+ Otherwise, write to/read from named file
+ */
+
 int parsecommand(char **tokens, struct stage **stages,
-        int pos, int stage, int pipe) {
+        int pos, int stage, int pipefromprev) {
     struct stage *curstage = calloc(1,sizeof(struct stage));
 
     strcpy(curstage->cmd, tokens[pos]);
     strcpy(curstage->argv[0], tokens[pos]);
-    strcpy(curstage->fullstage, tokens[pos]);
     curstage->argc = 1;
+    curstage->pipein = pipefromprev;
+    curstage->pipeout = 0;
     pos++;
 
     if(stage > 9) {
         fprintf(stderr, "pipeline too deep\n");
-        exit(EXIT_FAILURE);
+        return -1;
     }
 
     if(strpbrk(curstage->cmd, "|<>")) {
         fprintf(stderr,"invalid null command\n");
-        exit(EXIT_FAILURE);
+        return -2;
     }
 
-    if(pipe) {
+    if(pipefromprev) {
         sprintf(curstage->in,"pipe from stage %d", stage-1);
     }
 
@@ -32,60 +45,54 @@ int parsecommand(char **tokens, struct stage **stages,
         if(*(tokens[pos]) == '|') {
             if(curstage->out[0]) {
                 fprintf(stderr,"%s: ambiguous output\n", curstage->cmd);
-                exit(EXIT_FAILURE);
+                return -3;
             }
-
-            sprintf(curstage->out, "pipe to stage %d", stage + 1);
+            
+            curstage->pipeout = 1;
             stages[stage] = curstage;
             pos++;
 
             if(!curstage->in[0]) {
-                strcpy(curstage->in, "original stdin");
+                strcpy(curstage->in, "");
             }
 
             if(!curstage->out[0]) {
-                strcpy(curstage->out, "original stdout");
+                strcpy(curstage->out, "");
             }
 
             pos = parsecommand(tokens,stages,pos,stage+1,1);
+            if(pos < 0) {
+                return pos;
+            }
 
         } else if(*(tokens[pos]) == '>') {
             if(curstage->out[0]) {
                 fprintf(stderr,"%s: bad output redirection\n", curstage->cmd);
-                exit(EXIT_FAILURE);
+                return -4;
             }
 
-            strcat(curstage->fullstage, " ");
-            strcat(curstage->fullstage, tokens[pos++]);
-            strcat(curstage->fullstage, " ");
 
             if(strpbrk(tokens[pos], "|<>")) {
                 fprintf(stderr,"invalid null command\n");
-                exit(EXIT_FAILURE);
+                return -2;
             }
 
-            strcat(curstage->fullstage, tokens[pos]);
             strcpy(curstage->out, tokens[pos++]);
 
         } else if(*(tokens[pos]) == '<') {
             if(curstage->in[0]) {
                 fprintf(stderr,"%s: bad input redirection\n", curstage->cmd);
-                exit(EXIT_FAILURE);
-            } else if(pipe) {
+                return -4;
+            } else if(pipefromprev) {
                 fprintf(stderr,"%s: ambiguous input\n", curstage->cmd);
-                exit(EXIT_FAILURE);
+                return -3;
             }
-
-            strcat(curstage->fullstage, " ");
-            strcat(curstage->fullstage, tokens[pos++]);
-            strcat(curstage->fullstage, " ");
 
             if(strpbrk(tokens[pos], "|<>")) {
                 fprintf(stderr,"invalid null command\n");
-                exit(EXIT_FAILURE);
+                return -2;
             }
 
-            strcat(curstage->fullstage, tokens[pos]);
             strcpy(curstage->in, tokens[pos++]);
 
         } else {
@@ -94,22 +101,18 @@ int parsecommand(char **tokens, struct stage **stages,
 
             if(curstage->argc > 10) {
                 fprintf(stderr, "%s: too many arguments\n", curstage->cmd);
-                exit(EXIT_FAILURE);
+                return -1;
             }
-
-            strcat(curstage->fullstage, " ");
-            strcat(curstage->fullstage, tokens[pos]);
             pos++;
         }
     }
 
     if(!curstage->in[0]) {
-        printf("in prev: %s\n", curstage->in);
-        strcpy(curstage->in, "original stdin");
+        strcpy(curstage->in, "");
     }
 
     if(!curstage->out[0]) {
-        strcpy(curstage->out, "original stdout");
+        strcpy(curstage->out, "");
     }
 
     stages[stage] = curstage;
