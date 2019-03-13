@@ -62,6 +62,7 @@ int main(int argc, char *argv[]) {
 
     while(!feof(commands)) {
         stages = stageline(commands);
+        /*Execute commands*/
     }
 
 }
