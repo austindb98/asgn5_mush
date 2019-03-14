@@ -82,9 +82,15 @@ void printstages(struct stage **stages) {
 }
 
 void int_handler(int signum){
-  /*wait around*/
-  wait(NULL);
-  printf("\n");
+    /*wait around*/
+    while(wait(NULL) > 0){
+        /*Wait for all children*/;
+    }
+    printf("\n");
+    if(isatty(fileno(stdout)) && isatty(STDOUT_FILENO)) {
+        printf("8-P ");
+        fflush(stdout);
+    }
 }
 
 int main(int argc, char *argv[]) {
