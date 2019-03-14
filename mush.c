@@ -82,10 +82,11 @@ void printstages(struct stage **stages) {
 
 void int_handler(int signum){
     /*wait around*/
-    while(wait(NULL) > 0){
-        /*Wait for all children*/;
+    fprintf(stderr,"\nSIGINT received\n\n");
+    while(wait(NULL) > 0) {
+        fprintf(stderr,"Waiting for children\n");
     }
-    printf("\n");
+
     if(isatty(fileno(stdout)) && isatty(STDOUT_FILENO)) {
         printf("8-P ");
         fflush(stdout);
@@ -98,9 +99,15 @@ int main(int argc, char *argv[]) {
     struct stage **stages;
     /*signal initializations*/
     struct sigaction sa;
+    sigset_t mask, oldmask;
+
     sa.sa_handler = int_handler;
     sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
+    sigemptyset(&mask);
+    sigaddset(&mask,SIGINT);
+    sigprocmask(SIG_BLOCK, &mask, &oldmask);
 
     if(argc == 1) {
         commands = stdin;
