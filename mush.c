@@ -1,4 +1,4 @@
-#include "parseline.h"
+#include "parsecommand.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,7 +6,7 @@
 
 #define MAXLEN 256
 
-struct stage **stageline(FILE *insource) {
+struct stage **readline(FILE *insource) {
     struct stage **stages = calloc(sizeof(struct stage *), 11);
     char **tokens = calloc(sizeof(char *), 513);
 
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
             fflush(stdout);
         }
 
-        stages = stageline(commands);
+        stages = readline(commands);
         if(stages) {
             printstages(stages);
         } else {
