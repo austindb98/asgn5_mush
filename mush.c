@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #define MAXLEN 256
 
@@ -20,39 +21,67 @@ struct stage **stageline(FILE *insource) {
     char *token;
     int i;
 
-        if(*n > MAXLEN) {
-            fprintf(stderr,"line too long\n");
+    getline(lineptr, n, insource);
+
+    if(*n > MAXLEN) {
+        fprintf(stderr,"line too long\n");
+    }
+
+    line = *lineptr;
+
+    token = strtok(line, " \n");
+    for(i = 0; token; i++) {
+        tokens[i] = calloc(1,512);
+        strcpy(tokens[i], token);
+        token = strtok(NULL, " \n");
+    }
+    free(line);
+
+    if(!tokens[0]) {
+        return NULL;
+    }
+    int err = parsecommand(tokens, stages, 0, 0, 0);
+    if(err) {
+        return NULL;
+    }
+    for(i = 0; i < 512; i++) {
+        if(tokens[i]) {
+            free(tokens[i]);
         }
+    }
+    free(tokens);
 
-        line = *lineptr;
+    return stages;
+}
 
-        token = strtok(line, " \n");
-        for(i = 0; token; i++) {
-            tokens[i] = calloc(1,512);
-            strcpy(tokens[i], token);
-            token = strtok(NULL, " \n");
-        }
-        free(line);
-
-        parsecommand(tokens, stages, 0, 0, 0);
-        for(i = 0; i < 512; i++) {
-            if(tokens[i]) {
-                free(tokens[i]);
+void printstages(struct stage **stages) {
+    int i;
+    for(i = 0; stages[i]; i++) {
+        printf("--------\n");
+        printf("Stage %d: %s\n", i, stages[i]->cmd);
+        printf("--------\n");
+        printf("     input: %s\n", stages[i]->in);
+        printf("    output: %s\n", stages[i]->out);
+        printf("      argc: %d\n", stages[i]->argc);
+        printf("      argv: \"%s\"", stages[i]->argv[0]);
+        if(stages[i]->argc > 1) {
+            int j;
+            for(j = 1; j < stages[i]->argc; j++) {
+                printf(", \"%s\"", stages[i]->argv[j]);
+                free(stages[i]->argv[j]);
             }
+            printf("\n");
         }
-        free(tokens);
-
-        return stages;
+        printf("\n");
+        free(stages[i]);
+    }
+    free(stages);
 }
 
 int main(int argc, char *argv[]) {
 
     FILE *commands;
     struct stage **stages;
-
-    if(argc == 2) {
-        commands = fopen(argv[1], "r");
-    }
 
     if(argc == 1) {
         commands = stdin;
@@ -61,8 +90,17 @@ int main(int argc, char *argv[]) {
     }
 
     while(!feof(commands)) {
+        if(isatty(fileno(commands)) && isatty(STDOUT_FILENO)) {
+            printf("8-P ");
+            fflush(stdout);
+        }
+
         stages = stageline(commands);
-        /*Execute commands*/
+        if(stages) {
+            printstages(stages);
+        } else {
+            printf("error parsing command or end of file\n");
+        }
     }
 
 }

@@ -4,21 +4,18 @@
 #include <stdio.h>
 #include "parseline.h"
 
-/* Error codes
--1: Length of input/command
--2: invalid command
--3: ambiguous input/output
--4: bad redirection
- */
-
- /*
- Empty string in in/out = stdin/stdout
- Otherwise, write to/read from named file
- */
+/*
+Empty string in in/out = stdin/stdout
+Otherwise, write to/read from named file
+*/
 
 int parsecommand(char **tokens, struct stage **stages,
         int pos, int stage, int pipefromprev) {
     struct stage *curstage = calloc(1,sizeof(struct stage));
+
+    if(!tokens[0]) {
+        return 1;
+    }
 
     strcpy(curstage->cmd, tokens[pos]);
     strcpy(curstage->argv[0], tokens[pos]);
@@ -43,11 +40,16 @@ int parsecommand(char **tokens, struct stage **stages,
 
     while(tokens[pos]) {
         if(*(tokens[pos]) == '|') {
+            if(strlen(tokens[pos]) > 1) {
+                fprintf(stderr,"invalid null command\n");
+                return -2;
+            }
+
             if(curstage->out[0]) {
                 fprintf(stderr,"%s: ambiguous output\n", curstage->cmd);
                 return -3;
             }
-            
+
             curstage->pipeout = 1;
             stages[stage] = curstage;
             pos++;
@@ -66,13 +68,18 @@ int parsecommand(char **tokens, struct stage **stages,
             }
 
         } else if(*(tokens[pos]) == '>') {
+            if(strlen(tokens[pos]) > 1) {
+                fprintf(stderr,"invalid null command\n");
+                return -2;
+            }
+
             if(curstage->out[0]) {
                 fprintf(stderr,"%s: bad output redirection\n", curstage->cmd);
                 return -4;
             }
 
 
-            if(strpbrk(tokens[pos], "|<>")) {
+            if(strpbrk(tokens[++pos], "|<>")) {
                 fprintf(stderr,"invalid null command\n");
                 return -2;
             }
@@ -80,6 +87,11 @@ int parsecommand(char **tokens, struct stage **stages,
             strcpy(curstage->out, tokens[pos++]);
 
         } else if(*(tokens[pos]) == '<') {
+            if(strlen(tokens[pos]) > 1) {
+                fprintf(stderr,"invalid null command\n");
+                return -2;
+            }
+
             if(curstage->in[0]) {
                 fprintf(stderr,"%s: bad input redirection\n", curstage->cmd);
                 return -4;
@@ -88,7 +100,7 @@ int parsecommand(char **tokens, struct stage **stages,
                 return -3;
             }
 
-            if(strpbrk(tokens[pos], "|<>")) {
+            if(strpbrk(tokens[++pos], "|<>")) {
                 fprintf(stderr,"invalid null command\n");
                 return -2;
             }
@@ -116,5 +128,9 @@ int parsecommand(char **tokens, struct stage **stages,
     }
 
     stages[stage] = curstage;
-    return pos;
+    if(stage != 0) {
+        return pos;
+    } else {
+        return 0;
+    }
 }
