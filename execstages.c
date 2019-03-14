@@ -54,6 +54,10 @@ int execstages(struct stage **stages) {
         execvp(stages[i]->cmd,(char *const *)stages[i]->argv);
         perror(stages[i]->cmd);
         return -1;
+    } else if(pid < 0) {
+        perror("fork");
+        return -1;
+    } else {
+        return 0;
     }
-    return 0;
 }
