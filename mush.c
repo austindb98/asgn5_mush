@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include<signal.h>
+#include <signal.h>
+#include <sys/wait.h>
 
 #define MAXLEN 256
 
@@ -26,6 +27,7 @@ struct stage **readline(FILE *insource) {
 
     if(*n > MAXLEN) {
         fprintf(stderr,"line too long\n");
+        return NULL;
     }
 
     line = *lineptr;

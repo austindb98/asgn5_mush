@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "parseline.h"
+#include "parsecommand.h"
 
 /*
 Empty string in in/out = stdin/stdout
