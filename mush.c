@@ -71,7 +71,6 @@ void printstages(struct stage **stages) {
             int j;
             for(j = 1; j < stages[i]->argc; j++) {
                 printf(", \"%s\"", stages[i]->argv[j]);
-                free(stages[i]->argv[j]);
             }
             printf("\n");
         }
