@@ -28,7 +28,7 @@ int execstages(struct stage **stages) {
     int numstages;
     for(numstages = 0; stages[numstages]; numstages++) {
         if(!strcmp(stages[numstages]->cmd,"cd")) {
-            return cd(stages[numstages]);;
+            return cd(stages[numstages]);
         } else if(!strcmp(stages[numstages]->cmd,"exit")) {
             exit(0);
         }
