@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include<signal.h>
 
 #define MAXLEN 256
 
@@ -78,10 +79,21 @@ void printstages(struct stage **stages) {
     free(stages);
 }
 
+void int_handler(int signum){
+  /*wait around*/
+  wait(NULL);
+  printf("\n");
+}
+
 int main(int argc, char *argv[]) {
 
     FILE *commands;
     struct stage **stages;
+    /*signal initializations*/
+    struct sigaction sa;
+    sa.sa_handler = int_handler;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGINT, &sa, NULL);
 
     if(argc == 1) {
         commands = stdin;
