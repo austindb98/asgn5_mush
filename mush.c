@@ -83,7 +83,6 @@ void printstages(struct stage **stages) {
 
 void int_handler(int signum){
     /*wait around*/
-    fflush(stdin);
     write(STDERR_FILENO,"\nSIGINT received\n\n",18);
     while(wait(NULL) > 0) {
         write(STDERR_FILENO,"Waiting for children\n",22);
@@ -93,6 +92,25 @@ void int_handler(int signum){
         write(STDOUT_FILENO,"8-P ",4);
         fflush(stdout);
     }
+}
+void blockSignals(){
+  sigset_t mask;
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGINT);
+  if(sigprocmask(SIG_BLOCK, &mask, NULL) == -1){
+    perror("SIGBLOCK");
+    exit(3);
+  }
+}
+
+void unblockSignals(){
+  sigset_t mask;
+  sigemptyset(&mask);
+  sigaddset(&mask, SIGINT);
+  if(sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1){
+    perror("SIGUNBLOCK");
+    exit(3);
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -109,7 +127,6 @@ int main(int argc, char *argv[]) {
     sigaction(SIGINT, &sa, NULL);
     sigemptyset(&mask);
     sigaddset(&mask,SIGINT);
-    sigprocmask(SIG_BLOCK, &mask, &oldmask);
 
     if(argc == 1) {
         commands = stdin;
@@ -125,7 +142,10 @@ int main(int argc, char *argv[]) {
 
         stages = readline(commands);
         if(stages) {
-            execstages(stages);
+            if(execstages(stages) == 100) {
+                fprintf(stderr,"Exiting from main\n");
+                break;
+            }
         } else {
             printf("error parsing command or end of file\n");
         }
