@@ -81,7 +81,7 @@ void printstages(struct stage **stages) {
     free(stages);
 }
 
-void int_handler(int signum){
+void int_handler(int signum) {
     /*wait around*/
     write(STDERR_FILENO,"\nSIGINT received\n\n",18);
     while(wait(NULL) > 0) {
@@ -93,6 +93,7 @@ void int_handler(int signum){
         fflush(stdout);
     }
 }
+
 void blocksignals() {
     sigset_t mask;
     sigemptyset(&mask);

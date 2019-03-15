@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <fcntl.h>
 #include "parsecommand.h"
 #include "mush.h"
 
@@ -59,11 +60,19 @@ int execstages(struct stage **stages) {
         /*plumb ends of pipes if needed*/
 
         if(stages[i]->pipein) {
-            dup2(pipelist[i-1][0],fileno(stdin));
+            dup2(pipelist[i-1][0],STDIN_FILENO);
+        } else if(*(stages[i]->in)) {
+            int fd = open(stages[i]->in, O_RDONLY);
+            dup2(fd,STDIN_FILENO);
         }
+
         if(stages[i]->pipeout) {
-            dup2(pipelist[i][1],fileno(stdout));
+            dup2(pipelist[i][1],STDOUT_FILENO);
+        } else if(*(stages[i]->out)) {
+            int fd = open(stages[i]->out, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+            dup2(fd,STDOUT_FILENO);
         }
+
         unblocksignals();
         execvp(stages[i]->cmd,(char *const *)stages[i]->argv);
         fprintf(stderr, "%d ", errno);
