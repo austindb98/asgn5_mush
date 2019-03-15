@@ -87,7 +87,7 @@ void int_handler(int signum){
         fprintf(stderr,"Waiting for children\n");
     }
 
-    if(isatty(fileno(stdout)) && isatty(STDOUT_FILENO)) {
+    if(isatty(fileno(stdin)) && isatty(fileno(stdout))) {
         printf("8-P ");
         fflush(stdout);
     }
@@ -116,7 +116,7 @@ int main(int argc, char *argv[]) {
     }
 
     while(!feof(commands)) {
-        if(isatty(fileno(commands)) && isatty(STDOUT_FILENO)) {
+        if(isatty(fileno(stdin)) && isatty(fileno(stdout))) {
             printf("8-P ");
             fflush(stdout);
         }
