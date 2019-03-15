@@ -60,17 +60,19 @@ int execstages(struct stage **stages) {
         /*plumb ends of pipes if needed*/
 
         if(stages[i]->pipein) {
-            dup2(pipelist[i-1][0],STDIN_FILENO);
+            dup2(pipelist[i-1][0], STDIN_FILENO);
+            close(pipelist[i-1][1]);
         } else if(*(stages[i]->in)) {
             int fd = open(stages[i]->in, O_RDONLY);
-            dup2(fd,STDIN_FILENO);
+            dup2(fd, STDIN_FILENO);
         }
 
         if(stages[i]->pipeout) {
-            dup2(pipelist[i][1],STDOUT_FILENO);
+            dup2(pipelist[i][1], STDOUT_FILENO);
+            close(pipelist[i][0]);
         } else if(*(stages[i]->out)) {
             int fd = open(stages[i]->out, O_WRONLY|O_CREAT|O_TRUNC, 0644);
-            dup2(fd,STDOUT_FILENO);
+            dup2(fd, STDOUT_FILENO);
         }
 
         unblocksignals();
@@ -79,9 +81,11 @@ int execstages(struct stage **stages) {
         perror(stages[i]->cmd);
         exit(errno);
     } else if(pid < 0) {
+        unblocksignals();
         perror("fork");
         exit(errno);
     } else {
+        unblocksignals();
         for(i = 0; i < numstages; i++) {
             int j;
             for(j = 0; j < 2; j++) {

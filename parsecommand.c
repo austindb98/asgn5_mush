@@ -16,7 +16,7 @@ int parsecommand(char **tokens, struct stage **stages,
     curstage->argv = calloc(11,sizeof(char *));
 
     curstage->argv[0] = calloc(512,1);
-    curstage->argv[11] = NULL;
+    curstage->argv[10] = NULL;
 
     if(!tokens[0]) {
         return 1;

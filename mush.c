@@ -17,7 +17,7 @@ struct stage **readline(FILE *insource) {
     lineptr = (char **)malloc(sizeof(char *));
     *lineptr = NULL;
 
-    size_t *n = malloc(sizeof(int));
+    size_t *n = malloc(sizeof(size_t));
     *n = 0;
 
     char *line;
@@ -54,37 +54,22 @@ struct stage **readline(FILE *insource) {
         }
     }
     free(tokens);
-
+    free(lineptr);
+    free(n);
     return stages;
 }
 
-void printstages(struct stage **stages) {
+void freestages(struct stage **stages) {
     int i;
     for(i = 0; stages[i]; i++) {
-        printf("--------\n");
-        printf("Stage %d: %s\n", i, stages[i]->cmd);
-        printf("--------\n");
-        printf("     input: %s\n", stages[i]->in);
-        printf("    output: %s\n", stages[i]->out);
-        printf("      argc: %d\n", stages[i]->argc);
-        printf("      argv: \"%s\"", stages[i]->argv[0]);
-        if(stages[i]->argc > 1) {
-            int j;
-            for(j = 1; j < stages[i]->argc; j++) {
-                printf(", \"%s\"", stages[i]->argv[j]);
-            }
-            printf("\n");
+        int j;
+        for(j = 0; j < stages[i]->argc; j++) {
+            free(stages[i]->argv[j]);
         }
-        printf("\n");
+        free(stages[i]->argv);
         free(stages[i]);
     }
     free(stages);
-}
-
-void int_handler(int signum) {
-    /*wait around*/
-    ;
-
 }
 
 void blocksignals() {
@@ -107,20 +92,22 @@ void unblocksignals() {
     }
 }
 
-int main(int argc, char *argv[]) {
+void int_handler(int signum) {
+    /*wait around*/
+    write(STDOUT_FILENO, "\nSIGINT received\n", 17);
+}
 
+int main(int argc, char *argv[]) {
     FILE *commands;
     struct stage **stages;
-    /*signal initializations*/
     struct sigaction sa;
-    sigset_t mask, oldmask;
 
     sa.sa_handler = int_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
     sigaction(SIGINT, &sa, NULL);
-    sigemptyset(&mask);
-    sigaddset(&mask,SIGINT);
+
+    unblocksignals();
 
     if(argc == 1) {
         commands = stdin;
@@ -137,16 +124,16 @@ int main(int argc, char *argv[]) {
         stages = readline(commands);
 
         if(stages) {
-            if(execstages(stages) == 100) {
-                fprintf(stderr,"Exiting from main\n");
-                break;
-            }
-        } else {
-            printf("error parsing command or end of file\n");
+            execstages(stages);
+            freestages(stages);
+        } else if(ferror(commands)) {
+            clearerr(commands);
         }
 
+
+
         while(wait(NULL) > 0) {
-            write(STDERR_FILENO,"Waiting for children\n",22);
+            //write(STDERR_FILENO,"Waiting for children\n",21);
         }
     }
     exit(0);
