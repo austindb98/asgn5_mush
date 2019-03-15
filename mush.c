@@ -117,6 +117,8 @@ int main(int argc, char *argv[]) {
         commands = fopen(argv[1],"r");
     }
 
+
+
     while(!feof(commands)) {
         if(isatty(fileno(stdin)) && isatty(fileno(stdout))) {
             printf("8-P ");
@@ -124,10 +126,15 @@ int main(int argc, char *argv[]) {
         }
 
         stages = readline(commands);
+
         if(stages) {
             execstages(stages);
         } else {
             printf("error parsing command or end of file\n");
+        }
+        
+        while(wait(NULL) > 0) {
+            write(STDERR_FILENO,"Waiting for children\n",22);
         }
     }
     exit(0);
