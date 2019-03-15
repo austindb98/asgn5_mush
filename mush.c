@@ -93,7 +93,6 @@ void int_handler(int signum){
         fflush(stdout);
     }
 }
-
 void blockSignals() {
     sigset_t mask;
     sigemptyset(&mask);
