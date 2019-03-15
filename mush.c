@@ -83,15 +83,8 @@ void printstages(struct stage **stages) {
 
 void int_handler(int signum) {
     /*wait around*/
-    write(STDERR_FILENO,"\nSIGINT received\n\n",18);
-    while(wait(NULL) > 0) {
-        write(STDERR_FILENO,"Waiting for children\n",22);
-    }
+    ;
 
-    if(isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-        write(STDOUT_FILENO,"8-P ",4);
-        fflush(stdout);
-    }
 }
 
 void blocksignals() {
