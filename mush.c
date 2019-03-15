@@ -82,13 +82,13 @@ void printstages(struct stage **stages) {
 
 void int_handler(int signum){
     /*wait around*/
-    fprintf(stderr,"\nSIGINT received\n\n");
+    write(STDERR_FILENO,"\nSIGINT received\n\n",18);
     while(wait(NULL) > 0) {
-        fprintf(stderr,"Waiting for children\n");
+        write(STDERR_FILENO,"Waiting for children\n",22);
     }
 
     if(isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-        printf("8-P ");
+        write(STDOUT_FILENO,"8-P ",4);
         fflush(stdout);
     }
 }
