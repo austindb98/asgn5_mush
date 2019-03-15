@@ -31,8 +31,7 @@ int execstages(struct stage **stages) {
         if(!strcmp(stages[numstages]->cmd,"cd")) {
             return cd(stages[numstages]);
         } else if(!strcmp(stages[numstages]->cmd,"exit")) {
-            fprintf(stderr,"Exiting from execstages\n");
-            return 100;
+            exit(0);
         }
     }
 
@@ -66,10 +65,10 @@ int execstages(struct stage **stages) {
         execvp(stages[i]->cmd,(char *const *)stages[i]->argv);
         fprintf(stderr, "%d ", errno);
         perror(stages[i]->cmd);
-        return -1;
+        exit(errno);
     } else if(pid < 0) {
         perror("fork");
-        return -1;
+        exit(errno);
     } else {
         for(i = 0; i < numstages; i++) {
             int j;

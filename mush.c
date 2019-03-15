@@ -83,6 +83,7 @@ void printstages(struct stage **stages) {
 
 void int_handler(int signum){
     /*wait around*/
+    fflush(stdin);
     write(STDERR_FILENO,"\nSIGINT received\n\n",18);
     while(wait(NULL) > 0) {
         write(STDERR_FILENO,"Waiting for children\n",22);
@@ -124,10 +125,7 @@ int main(int argc, char *argv[]) {
 
         stages = readline(commands);
         if(stages) {
-            if(execstages(stages) == 100) {
-                fprintf(stderr,"Exiting from main\n");
-                break;
-            }
+            execstages(stages);
         } else {
             printf("error parsing command or end of file\n");
         }
