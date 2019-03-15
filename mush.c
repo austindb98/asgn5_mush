@@ -135,8 +135,6 @@ int main(int argc, char *argv[]) {
         commands = fopen(argv[1],"r");
     }
 
-
-
     while(!feof(commands)) {
         if(isatty(fileno(stdin)) && isatty(fileno(stdout))) {
             printf("8-P ");

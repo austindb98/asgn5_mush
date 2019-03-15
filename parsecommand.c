@@ -11,7 +11,12 @@ Otherwise, write to/read from named file
 
 int parsecommand(char **tokens, struct stage **stages,
         int pos, int stage, int pipefromprev) {
+
     struct stage *curstage = calloc(1,sizeof(struct stage));
+    curstage->argv = calloc(11,sizeof(char *));
+
+    curstage->argv[0] = calloc(512,1);
+    curstage->argv[11] = NULL;
 
     if(!tokens[0]) {
         return 1;
@@ -108,6 +113,7 @@ int parsecommand(char **tokens, struct stage **stages,
             strcpy(curstage->in, tokens[pos++]);
 
         } else {
+            curstage->argv[curstage->argc] = calloc(512,1);
             strcpy(curstage->argv[curstage->argc], tokens[pos]);
             curstage->argc += 1;
 
@@ -127,7 +133,6 @@ int parsecommand(char **tokens, struct stage **stages,
         strcpy(curstage->out, "");
     }
 
-    memset(curstage->argv[curstage->argc], '\0', sizeof(char *));
     stages[stage] = curstage;
     if(stage != 0) {
         return pos;

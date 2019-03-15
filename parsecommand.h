@@ -7,7 +7,7 @@ struct stage {
     int pipeout;
     char out[512];
     int argc;
-    char argv[11][512];
+    char **argv;
 };
 int parsecommand(char **tokens, struct stage **stages,
         int pos, int stage, int pipe);
