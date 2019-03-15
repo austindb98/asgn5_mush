@@ -1,4 +1,5 @@
 #include "parsecommand.h"
+#include "execstages.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -123,10 +124,13 @@ int main(int argc, char *argv[]) {
 
         stages = readline(commands);
         if(stages) {
-            printstages(stages);
+            if(execstages(stages) == 100) {
+                fprintf(stderr,"Exiting from main\n");
+                break;
+            }
         } else {
             printf("error parsing command or end of file\n");
         }
     }
-
+    exit(0);
 }

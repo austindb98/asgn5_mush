@@ -127,6 +127,7 @@ int parsecommand(char **tokens, struct stage **stages,
         strcpy(curstage->out, "");
     }
 
+    memset(curstage->argv[curstage->argc], '\0', sizeof(char *));
     stages[stage] = curstage;
     if(stage != 0) {
         return pos;
