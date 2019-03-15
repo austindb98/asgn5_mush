@@ -93,24 +93,25 @@ void int_handler(int signum){
         fflush(stdout);
     }
 }
-void blockSignals(){
-  sigset_t mask;
-  sigemptyset(&mask);
-  sigaddset(&mask, SIGINT);
-  if(sigprocmask(SIG_BLOCK, &mask, NULL) == -1){
-    perror("SIGBLOCK");
-    exit(3);
-  }
+
+void blockSignals() {
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    if(sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
+        perror("SIGBLOCK");
+        exit(3);
+    }
 }
 
-void unblockSignals(){
-  sigset_t mask;
-  sigemptyset(&mask);
-  sigaddset(&mask, SIGINT);
-  if(sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1){
-    perror("SIGUNBLOCK");
-    exit(3);
-  }
+void unblockSignals() {
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    if(sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
+        perror("SIGUNBLOCK");
+        exit(3);
+    }
 }
 
 int main(int argc, char *argv[]) {
@@ -152,7 +153,7 @@ int main(int argc, char *argv[]) {
         } else {
             printf("error parsing command or end of file\n");
         }
-        
+
         while(wait(NULL) > 0) {
             write(STDERR_FILENO,"Waiting for children\n",22);
         }
