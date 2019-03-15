@@ -1,7 +1,7 @@
 #ifndef MUSH
 #define MUSH
 
-void blockSignals();
-void unblockSignals();
+void blocksignals();
+void unblocksignals();
 
 #endif

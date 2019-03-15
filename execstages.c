@@ -4,6 +4,7 @@
 #include <string.h>
 #include <errno.h>
 #include "parsecommand.h"
+#include "mush.h"
 
 int cd(struct stage *cdstage) {
     if(cdstage->argc!=2) {
@@ -45,6 +46,7 @@ int execstages(struct stage **stages) {
 
     pid_t pid;
 
+    blocksignals();
     for(i = 0; stages[i]; i++) {
         if(!(pid = fork())) {
             /*Fork child preserving i*/
@@ -62,6 +64,7 @@ int execstages(struct stage **stages) {
         if(stages[i]->pipeout) {
             dup2(pipelist[i][1],fileno(stdout));
         }
+        unblocksignals();
         execvp(stages[i]->cmd,(char *const *)stages[i]->argv);
         fprintf(stderr, "%d ", errno);
         perror(stages[i]->cmd);
