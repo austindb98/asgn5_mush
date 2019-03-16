@@ -8,17 +8,31 @@
 #include <sys/wait.h>
 
 #define MAXLEN 512
+#define MAXSTAGES 10
 
 struct stage **readline(FILE *insource) {
-    struct stage **stages = calloc(sizeof(struct stage *), 11);
+    struct stage **stages = calloc(sizeof(struct stage *), MAXSTAGES+1);
     /*MAXLEN + null terminated*/
     char **tokens = calloc(sizeof(char *), MAXLEN+1);
+    if(!tokens) {
+        perror("calloc");
+        exit(-1);
+    }
 
-    char **lineptr;
-    lineptr = (char **)malloc(sizeof(char *));
+    char **lineptr = (char **)malloc(sizeof(char *));
+
+    if(!lineptr) {
+        perror("calloc");
+        exit(-1);
+    }
+
     *lineptr = NULL;
 
     size_t *n = malloc(sizeof(size_t));
+    if(!n) {
+        perror("calloc");
+        exit(-1);
+    }
     *n = 0;
 
     char *line;
@@ -40,24 +54,33 @@ struct stage **readline(FILE *insource) {
     token = strtok(line, " \n");
     for(i = 0; token; i++) {
         tokens[i] = calloc(1,MAXLEN);
+        if(!tokens[i]) {
+            perror("calloc");
+            exit(-1);
+        }
         strcpy(tokens[i], token);
         token = strtok(NULL, " \n");
     }
-    free(line);
 
     if(!tokens[0]) {
         return NULL;
     }
+
     int err = parsecommand(tokens, stages, 0, 0, 0);
     if(err) {
         return NULL;
     }
+
     for(i = 0; i < MAXLEN; i++) {
         if(tokens[i]) {
             free(tokens[i]);
         }
     }
+
     free(tokens);
+    if(*lineptr) {
+        free(*lineptr);
+    }
     free(lineptr);
     free(n);
     return stages;
@@ -142,6 +165,9 @@ int main(int argc, char *argv[]) {
         while(wait(NULL) > 0) {
             /*Wait for all children*/;
         }
+    }
+    if(stages) {
+        freestages(stages);
     }
     exit(0);
 }
