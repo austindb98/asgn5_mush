@@ -72,20 +72,23 @@ void freestages(struct stage **stages) {
     free(stages);
 }
 
+/*a function to block interrupt signals*/
 void blocksignals() {
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGINT);
+    /*create the sigprocmask to block signals*/
     if(sigprocmask(SIG_BLOCK, &mask, NULL) == -1) {
         perror("SIGBLOCK");
         exit(3);
     }
 }
-
+/*a function to unblock interrupt signals*/
 void unblocksignals() {
     sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGINT);
+    /*create the sigprocmask to unblock signals*/
     if(sigprocmask(SIG_UNBLOCK, &mask, NULL) == -1) {
         perror("SIGUNBLOCK");
         exit(3);
@@ -101,7 +104,8 @@ int main(int argc, char *argv[]) {
     FILE *commands;
     struct stage **stages;
     struct sigaction sa;
-
+    
+    /*initialize signal variables*/
     sa.sa_handler = int_handler;
     sigemptyset(&sa.sa_mask);
     sa.sa_flags = 0;
