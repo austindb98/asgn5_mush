@@ -7,6 +7,16 @@
 #include "parsecommand.h"
 #include "mush.h"
 
+void closepipes(int pipelist[][2], int numstages) {
+    int i;
+    for(i = 0; i < numstages; i++) {
+        int j;
+        for(j = 0; j < 2; j++) {
+            close(pipelist[i][j]);
+        }
+    }
+}
+
 int cd(struct stage *cdstage) {
     if(cdstage->argc!=2) {
         fprintf(stderr,"usage: cd path/to/directory\n");
@@ -49,49 +59,39 @@ int execstages(struct stage **stages) {
 
     blocksignals();
     for(i = 0; stages[i]; i++) {
-        if(!(pid = fork())) {
-            /*Fork child preserving i*/
-            break;
-        }
-    }
+        if((pid = fork()) == 0) {
+            /*child*/
+            /*plumb ends of pipes if needed*/
 
-    if(pid == 0) {
-        /*child*/
-        /*plumb ends of pipes if needed*/
-
-        if(stages[i]->pipein) {
-            dup2(pipelist[i-1][0], STDIN_FILENO);
-            close(pipelist[i-1][1]);
-        } else if(*(stages[i]->in)) {
-            int fd = open(stages[i]->in, O_RDONLY);
-            dup2(fd, STDIN_FILENO);
-        }
-
-        if(stages[i]->pipeout) {
-            dup2(pipelist[i][1], STDOUT_FILENO);
-            close(pipelist[i][0]);
-        } else if(*(stages[i]->out)) {
-            int fd = open(stages[i]->out, O_WRONLY|O_CREAT|O_TRUNC, 0644);
-            dup2(fd, STDOUT_FILENO);
-        }
-
-        unblocksignals();
-        execvp(stages[i]->cmd,(char *const *)stages[i]->argv);
-        fprintf(stderr, "%d ", errno);
-        perror(stages[i]->cmd);
-        exit(errno);
-    } else if(pid < 0) {
-        unblocksignals();
-        perror("fork");
-        exit(errno);
-    } else {
-        unblocksignals();
-        for(i = 0; i < numstages; i++) {
-            int j;
-            for(j = 0; j < 2; j++) {
-                close(pipelist[i][j]);
+            if(stages[i]->pipein) {
+                dup2(pipelist[i-1][0], STDIN_FILENO);
+            } else if(*(stages[i]->in)) {
+                int fd = open(stages[i]->in, O_RDONLY);
+                dup2(fd, STDIN_FILENO);
             }
+
+            if(stages[i]->pipeout) {
+                dup2(pipelist[i][1], STDOUT_FILENO);
+            } else if(*(stages[i]->out)) {
+                int fd = open(stages[i]->out, O_WRONLY|O_CREAT|O_TRUNC, 0644);
+                dup2(fd, STDOUT_FILENO);
+            }
+
+            closepipes(pipelist,numstages);
+            unblocksignals();
+            execvp(stages[i]->cmd,(char *const *)stages[i]->argv);
+            fprintf(stderr, "%d ", errno);
+            perror(stages[i]->cmd);
+            exit(errno);
+        } else if(pid < 0) {
+            closepipes(pipelist,numstages);
+            unblocksignals();
+            perror("fork");
+            exit(errno);
         }
-        return 0;
+
     }
+    unblocksignals();
+    closepipes(pipelist,numstages);
+    return 0;
 }
