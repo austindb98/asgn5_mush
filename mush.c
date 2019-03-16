@@ -97,14 +97,14 @@ void unblocksignals() {
 
 void int_handler(int signum) {
     /*wait around*/
-    write(STDOUT_FILENO, "\nSIGINT received\n", 17);
+    ;
 }
 
 int main(int argc, char *argv[]) {
     FILE *commands;
     struct stage **stages;
     struct sigaction sa;
-    
+
     /*initialize signal variables*/
     sa.sa_handler = int_handler;
     sigemptyset(&sa.sa_mask);
