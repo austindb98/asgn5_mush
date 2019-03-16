@@ -35,10 +35,6 @@ struct stage **readline(FILE *insource) {
     }
     *n = 0;
 
-    char *line;
-    char *token;
-    int i;
-
     if(-1 == getline(lineptr, n, insource)) {
         perror("getline");
         exit(-1);
@@ -48,6 +44,12 @@ struct stage **readline(FILE *insource) {
         fprintf(stderr,"line too long\n");
         return NULL;
     }
+
+    free(n);
+
+    char *line;
+    char *token;
+    int i;
 
     line = *lineptr;
 
@@ -82,7 +84,7 @@ struct stage **readline(FILE *insource) {
         free(*lineptr);
     }
     free(lineptr);
-    free(n);
+
     return stages;
 }
 
