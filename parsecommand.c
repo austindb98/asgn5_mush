@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include "parsecommand.h"
 
+#define MAXARGS 10
+#define MAXLINELEN 512
+
 /*
 Empty string in in/out = stdin/stdout
 Otherwise, write to/read from named file
@@ -13,10 +16,11 @@ int parsecommand(char **tokens, struct stage **stages,
         int pos, int stage, int pipefromprev) {
 
     struct stage *curstage = calloc(1,sizeof(struct stage));
-    curstage->argv = calloc(11,sizeof(char *));
 
-    curstage->argv[0] = calloc(512,1);
-    curstage->argv[10] = NULL;
+    /*List of args (char *), NULL terminated*/
+    curstage->argv = calloc(MAXARGS+1, sizeof(char *));
+    curstage->argv[0] = calloc(MAXLINELEN,1);
+    curstage->argv[MAXARGS] = NULL;
 
     if(!tokens[0]) {
         return 1;
@@ -29,7 +33,7 @@ int parsecommand(char **tokens, struct stage **stages,
     curstage->pipeout = 0;
     pos++;
 
-    if(stage > 9) {
+    if(stage > MAXARGS-1) {
         fprintf(stderr, "pipeline too deep\n");
         return -1;
     }
@@ -44,6 +48,7 @@ int parsecommand(char **tokens, struct stage **stages,
     }
 
     while(tokens[pos]) {
+        /*Check first character of next token*/
         if(*(tokens[pos]) == '|') {
             if(strlen(tokens[pos]) > 1) {
                 fprintf(stderr,"invalid null command\n");
@@ -67,6 +72,7 @@ int parsecommand(char **tokens, struct stage **stages,
                 strcpy(curstage->out, "");
             }
 
+            /*Recurse*/
             pos = parsecommand(tokens,stages,pos,stage+1,1);
             if(pos < 0) {
                 return pos;
@@ -113,11 +119,11 @@ int parsecommand(char **tokens, struct stage **stages,
             strcpy(curstage->in, tokens[pos++]);
 
         } else {
-            curstage->argv[curstage->argc] = calloc(512,1);
+            curstage->argv[curstage->argc] = calloc(MAXLINELEN,1);
             strcpy(curstage->argv[curstage->argc], tokens[pos]);
             curstage->argc += 1;
 
-            if(curstage->argc > 10) {
+            if(curstage->argc > MAXARGS) {
                 fprintf(stderr, "%s: too many arguments\n", curstage->cmd);
                 return -1;
             }
@@ -125,6 +131,7 @@ int parsecommand(char **tokens, struct stage **stages,
         }
     }
 
+    /*If in and out aren't set, ensure they're NULL*/
     if(!curstage->in[0]) {
         strcpy(curstage->in, "");
     }
@@ -133,7 +140,9 @@ int parsecommand(char **tokens, struct stage **stages,
         strcpy(curstage->out, "");
     }
 
+    /*Copy to output*/
     stages[stage] = curstage;
+    
     if(stage != 0) {
         return pos;
     } else {
