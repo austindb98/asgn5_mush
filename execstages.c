@@ -19,12 +19,8 @@ void closepipes(int pipelist[][2], int numstages) {
 
 int cd(struct stage *cdstage) {
     if(cdstage->argc!=2) {
+        /*If no directory specified*/
         fprintf(stderr,"usage: cd path/to/directory\n");
-        return -1;
-    }
-
-    if(!cdstage->argv[1]) {
-        fprintf(stderr,"No directory specified\n");
         return -1;
     }
 
@@ -39,6 +35,7 @@ int cd(struct stage *cdstage) {
 
 int execstages(struct stage **stages) {
     int numstages;
+    /*Iterate and count stages, check for cd and exit*/
     for(numstages = 0; stages[numstages]; numstages++) {
         if(!strcmp(stages[numstages]->cmd,"cd")) {
             return cd(stages[numstages]);
@@ -50,19 +47,24 @@ int execstages(struct stage **stages) {
     int pipelist[numstages][2];
 
     int i = 0;
+    /*create pipes*/
     for(i = 0; i < numstages; i++) {
-        pipe(pipelist[i]);
+        if(-1 == pipe(pipelist[i])) {
+            perror("pipe");
+            exit(-1);
+        }
     }
 
 
-    pid_t pid;
 
+    /*Block sigints during fork*/
     blocksignals();
     for(i = 0; stages[i]; i++) {
+        pid_t pid;
         if((pid = fork()) == 0) {
             /*child*/
-            /*plumb ends of pipes if needed*/
 
+            /*Input*/
             if(stages[i]->pipein) {
                 dup2(pipelist[i-1][0], STDIN_FILENO);
             } else if(*(stages[i]->in)) {
@@ -70,6 +72,7 @@ int execstages(struct stage **stages) {
                 dup2(fd, STDIN_FILENO);
             }
 
+            /*Output*/
             if(stages[i]->pipeout) {
                 dup2(pipelist[i][1], STDOUT_FILENO);
             } else if(*(stages[i]->out)) {
